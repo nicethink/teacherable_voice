@@ -166,7 +166,7 @@
                 webcam = new tmImage.Webcam(width, width, flip); // 정사각형 비율 유지
 
                 logDebug('웹캠 설정 시작');
-                await webcam.setup({ video: { facingMode: facingMode } }); // 수정된 부분
+                await webcam.setup({ video: { facingMode: facingMode } });
                 logDebug('웹캠 설정 완료');
                 await webcam.play();
                 logDebug('웹캠 재생 시작');
