@@ -84,14 +84,15 @@
         <div id="label-container"></div>
     </div>
 
+    <!-- 최신 버전의 TensorFlow.js 및 Teachable Machine 라이브러리 사용 -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
     <script type="text/javascript">
         const URL = "https://teachablemachine.withgoogle.com/models/u3x_M0uVj/";
         let model, webcam, labelContainer, maxPredictions;
+
+        // 카메라 설정을 위한 변수
         let currentStream = null;
-        let lastSpokenMessage = '';
-        let lastSpokenTime = 0;
 
         // 음성 합성 초기화
         const speech = new SpeechSynthesisUtterance();
@@ -101,6 +102,8 @@
         speech.pitch = 1;
 
         // 메시지 재생 함수
+        let lastSpokenMessage = '';
+        let lastSpokenTime = 0;
         function speakMessage(message) {
             const currentTime = new Date().getTime();
             // 같은 메시지는 3초 간격으로만 재생
@@ -117,32 +120,35 @@
                 currentStream.getTracks().forEach(track => track.stop());
             }
 
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+
             try {
-                const constraints = {
-                    video: { facingMode: facingMode }
-                };
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                currentStream = stream;
-
-                // Teachable Machine Webcam 초기화
-                const modelURL = URL + "model.json";
-                const metadataURL = URL + "metadata.json";
-
+                // 모델 로드
                 model = await tmImage.load(modelURL, metadataURL);
                 maxPredictions = model.getTotalClasses();
 
-                const flip = facingMode === 'user';
-                const width = Math.min(window.innerWidth - 30, 400);
-                webcam = new tmImage.Webcam(width, width, flip);
-                await webcam.setup();
+                // 웹캠 설정
+                const flip = facingMode === 'user'; // 전면 카메라일 때만 좌우 반전
+                const width = Math.min(window.innerWidth - 30, 400); // 화면 크기에 맞춤
+                webcam = new tmImage.Webcam(width, width, flip); // 정사각형 비율 유지
+
+                await webcam.setup({ facingMode: facingMode });
                 await webcam.play();
+                currentStream = webcam.webcam.srcObject;
                 window.requestAnimationFrame(loop);
 
+                // 웹캠 컨테이너에 캔버스 추가
                 const webcamContainer = document.getElementById("webcam-container");
                 webcamContainer.innerHTML = '';
                 webcamContainer.appendChild(webcam.canvas);
+
+                // 초기 레이블 설정
+                labelContainer.className = "";
+                labelContainer.innerHTML = "카메라가 정상적으로 작동합니다.";
             } catch (e) {
                 console.error('카메라 설정 오류:', e);
+                labelContainer.className = "warning";
                 labelContainer.innerHTML = "카메라 접근 권한을 허용해주세요!";
                 speakMessage("카메라 접근 권한을 허용해주세요!");
             }
@@ -186,6 +192,8 @@
                 alert('이 브라우저는 음성 합성을 지원하지 않습니다.');
             }
         });
+
+        // 페이지 로드 시 초기화하지 않음. 카메라 시작 버튼을 통해 초기화.
     </script>
 </body>
 </html>
